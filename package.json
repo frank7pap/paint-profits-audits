@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "Automated audit pages for Paint & Profits",
   "engines": {
-    "node": "18.x"
+    "node": "24.x"
   }
 }
- 
