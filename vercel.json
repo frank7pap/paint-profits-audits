@@ -1,9 +1,14 @@
 {
   "version": 2,
+  "functions": {
+    "index.js": {
+      "runtime": "nodejs18.x"
+    }
+  },
   "routes": [
     {
-      "src": "/([^/]+)",
-      "dest": "/api/audit?slug=$1"
+      "src": "/(.*)",
+      "dest": "/index.js"
     }
   ]
 }
