@@ -1,9 +1,8 @@
 const https = require('https');
 
-function semrushGet(params) {
-  return new Promise((resolve, reject) => {
-    const qs = new URLSearchParams({ key: process.env.SEMRUSH_API_KEY, ...params }).toString();
-    https.get(`https://api.semrush.com/?${qs}`, (res) => {
+function semrushGet(url) {
+  return new Promise((resolve) => {
+    https.get(url, (res) => {
       let d = '';
       res.on('data', c => d += c);
       res.on('end', () => resolve(d));
@@ -40,40 +39,39 @@ module.exports = async (req, res) => {
   const city    = req.query.city  || 'Your City';
   const state   = req.query.state || '';
   const website = req.query.website || '';
-  const domain  = website.replace(/https?:\/\/(www\.)?/, '').split('/')[0];
+  const domain  = website.replace(/https?:\/\/(www\.)?/, '').split('/')[0].toLowerCase();
+
+  const KEY = process.env.SEMRUSH_API_KEY;
 
   let authorityScore  = 0;
   let organicTraffic  = 0;
   let organicKeywords = 0;
   let backlinks       = 0;
-  let aiVisibility    = 0;
 
-  if (domain) {
+  if (domain && KEY) {
     try {
-      const ov = await semrushGet({
-        type: 'domain_ranks',
-        export_columns: 'Dn,Rk,Or,Ot,Oc,Ad,At,Ac',
-        domain,
-        database: 'us'
-      });
-      const ovd = parseCSV(ov);
-      organicKeywords = parseInt(ovd['Or'] || 0);
-      organicTraffic  = parseInt(ovd['Ot'] || 0);
+      // Domain overview - correct endpoint
+      const ovUrl = `https://api.semrush.com/?type=domain_ranks&key=${KEY}&export_columns=Dn,Rk,Or,Ot,Oc,Ad&domain=${domain}&database=us`;
+      const ovRaw = await semrushGet(ovUrl);
+      console.log('domain_ranks raw:', ovRaw.substring(0, 200));
+      const ovd = parseCSV(ovRaw);
+      organicKeywords = parseInt(ovd['Or'] || ovd['or'] || 0);
+      organicTraffic  = parseInt(ovd['Ot'] || ovd['ot'] || 0);
 
-      const bl = await semrushGet({
-        type: 'backlinks_overview',
-        export_columns: 'ascore,total,domains_num',
-        target: domain,
-        target_type: 'root_domain'
-      });
-      const bld = parseCSV(bl);
-      authorityScore = parseInt(bld['ascore'] || 0);
-      backlinks      = parseInt(bld['total']  || 0);
+      // Backlinks - correct endpoint
+      const blUrl = `https://api.semrush.com/?type=backlinks_overview&key=${KEY}&target=${domain}&target_type=root_domain&export_columns=ascore,total,domains_num`;
+      const blRaw = await semrushGet(blUrl);
+      console.log('backlinks raw:', blRaw.substring(0, 200));
+      const bld = parseCSV(blRaw);
+      authorityScore = parseInt(bld['ascore'] || bld['Authority Score'] || 0);
+      backlinks      = parseInt(bld['total']   || bld['Total'] || 0);
 
     } catch (e) {
       console.error('SEMrush error:', e.message);
     }
   }
+
+  console.log(`Results for ${domain}: AS=${authorityScore} Traffic=${organicTraffic} KW=${organicKeywords} BL=${backlinks}`);
 
   const daScore       = Math.min(authorityScore, 100);
   const speedScore    = organicTraffic > 1000 ? 65 : organicTraffic > 300 ? 45 : organicTraffic > 50 ? 30 : 20;
@@ -81,7 +79,7 @@ module.exports = async (req, res) => {
   const localScore    = organicKeywords > 500 ? 70 : organicKeywords > 100 ? 50 : organicKeywords > 20 ? 30 : 15;
   const citationScore = backlinks > 500 ? 75 : backlinks > 200 ? 55 : backlinks > 50 ? 35 : backlinks > 10 ? 20 : 10;
   const gbpScore      = organicKeywords > 200 ? 55 : organicKeywords > 50 ? 38 : organicKeywords > 10 ? 25 : 18;
-  const aiScore       = Math.min(aiVisibility, 100);
+  const aiScore       = 0;
 
   const date = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
@@ -90,7 +88,7 @@ module.exports = async (req, res) => {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>${company} &mdash; Free Google Visibility Audit | Paint &amp; Profits</title>
+<title>${company} - Free Google Visibility Audit | Paint & Profits</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: Arial, Helvetica, sans-serif; background: #f2f4f7; color: #1A1A2E; }
@@ -170,7 +168,7 @@ body { font-family: Arial, Helvetica, sans-serif; background: #f2f4f7; color: #1
     <h2>What This Means For You</h2>
     <p>Your Google Business Profile needs optimization &mdash; painters with fully optimized GBPs get 3-5x more calls from local searches in ${city}.</p>
     <p>Your SEO authority score of ${seoScore} means competitors with higher scores are showing up above you when homeowners search for painters in ${city}. Every position you&rsquo;re not ranking = jobs going to someone else.</p>
-    <p>Your AI visibility score is ${aiScore}. ChatGPT, Google AI Overview, and Siri are now recommending local businesses &mdash; painters who show up there are getting leads before anyone even searches Google.</p>
+    <p>Your AI visibility is critically low. ChatGPT, Google AI Overview, and Siri are now recommending local businesses &mdash; painters who show up there are getting leads before anyone even searches Google.</p>
   </div>
 
   <div class="results">
