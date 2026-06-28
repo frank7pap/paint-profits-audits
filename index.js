@@ -17,9 +17,9 @@ function scoreBar(pct) {
 
 // Returns { emoji, label, color } for a 0-100 score
 function scoreStatus(val) {
-  if (val >= 70) return { emoji: '\uD83D\uDD28', label: 'Room for Improvement', color: '#E87722' };
-  if (val >= 40) return { emoji: '\u26A0\uFE0F', label: 'Needs Attention', color: '#E87722' };
-  return { emoji: '\u274C', label: 'Poor', color: '#e74c3c' };
+  if (val >= 70) return { emoji: '\uD83D\uDD28', label: 'ROOM FOR IMPROVEMENT', color: '#E87722' };
+  if (val >= 40) return { emoji: '\u26A0\uFE0F', label: 'NEEDS ATTENTION', color: '#E87722' };
+  return { emoji: '\u274C', label: 'POOR', color: '#e74c3c' };
 }
 
 function dataEmo(val, good, warn) {
@@ -64,8 +64,7 @@ function scoreRow(icon, name, val, display) {
             <div class="score-status" style="color:${s.color}">${s.label}</div>
           </div>
           <div class="score-right">
-            <div class="score-pct">${formatted}</div>
-            <div class="score-emoji">${s.emoji}</div>
+            <div class="score-pct">${formatted} ${s.emoji}</div>
           </div>
         </div>
       </div>
