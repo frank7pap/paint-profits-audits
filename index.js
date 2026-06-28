@@ -212,3 +212,4 @@ body { font-family: Arial, Helvetica, sans-serif; background: #f2f4f7; color: #1
   res.setHeader('Content-Type', 'text/html');
   res.status(200).send(html);
 };
+ 
