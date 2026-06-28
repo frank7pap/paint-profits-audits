@@ -10,16 +10,6 @@ function semrushGet(url) {
   });
 }
 
-function parseCSV(text) {
-  const lines = text.trim().split('\n');
-  if (lines.length < 2) return {};
-  const headers = lines[0].split(';');
-  const values  = lines[1].split(';');
-  const out = {};
-  headers.forEach((h, i) => out[h.trim()] = (values[i] || '').trim());
-  return out;
-}
-
 function scoreBar(pct) {
   const n = Math.min(10, Math.max(0, Math.round(pct / 10)));
   return '\u2588'.repeat(n) + '\u2591'.repeat(10 - n);
@@ -32,7 +22,6 @@ function emo(pct) {
 }
 
 module.exports = async (req, res) => {
-  // Get slug from URL path or query
   const urlSlug = req.url.split('?')[0].replace(/^\//, '') || req.query.slug || '';
   const company = req.query.company || urlSlug.replace(/-/g, ' ') || 'Your Company';
   const city    = req.query.city    || 'Your City';
@@ -40,32 +29,42 @@ module.exports = async (req, res) => {
   const website = req.query.website || '';
   const domain  = website.replace(/https?:\/\/(www\.)?/i, '').split('/')[0].toLowerCase().trim();
 
-  console.log(`[AUDIT] slug=${urlSlug} domain=${domain} company=${company} city=${city}`);
+  console.log(`[AUDIT] domain=${domain} company=${company} city=${city}`);
 
   const KEY = process.env.SEMRUSH_API_KEY || '';
   let authorityScore = 0, organicTraffic = 0, organicKeywords = 0, backlinks = 0;
 
   if (domain && KEY) {
     try {
+      // domain_ranks returns: Domain;Rank;Organic Keywords;Organic Traffic;Organic Cost;Adwords Keywords
       const ovUrl = `https://api.semrush.com/?type=domain_ranks&key=${KEY}&export_columns=Dn,Rk,Or,Ot,Oc,Ad&domain=${domain}&database=us`;
       const ovRaw = await semrushGet(ovUrl);
-      console.log(`[SEMRUSH domain_ranks] ${ovRaw.substring(0, 300)}`);
-      const ovd = parseCSV(ovRaw);
-      organicKeywords = parseInt(ovd['Or'] || 0);
-      organicTraffic  = parseInt(ovd['Ot'] || 0);
+      console.log(`[domain_ranks] ${ovRaw.substring(0, 300)}`);
+      
+      const ovLines = ovRaw.trim().split('\n');
+      if (ovLines.length >= 2) {
+        const vals = ovLines[1].split(';');
+        // Dn=0, Rk=1, Or=2, Ot=3, Oc=4, Ad=5
+        organicKeywords = parseInt(vals[2] || 0);
+        organicTraffic  = parseInt(vals[3] || 0);
+      }
 
-      const blUrl = `https://api.semrush.com/?type=backlinks_overview&key=${KEY}&target=${domain}&target_type=root_domain&export_columns=ascore,total,domains_num`;
-      const blRaw = await semrushGet(blUrl);
-      console.log(`[SEMRUSH backlinks] ${blRaw.substring(0, 300)}`);
-      const bld = parseCSV(blRaw);
-      authorityScore = parseInt(bld['ascore'] || 0);
-      backlinks      = parseInt(bld['total']   || 0);
+      // authority score from domain_score endpoint
+      const asUrl = `https://api.semrush.com/?type=domain_score&key=${KEY}&domain=${domain}&export_columns=Dn,Ds`;
+      const asRaw = await semrushGet(asUrl);
+      console.log(`[domain_score] ${asRaw.substring(0, 200)}`);
+      const asLines = asRaw.trim().split('\n');
+      if (asLines.length >= 2) {
+        const asVals = asLines[1].split(';');
+        authorityScore = parseInt(asVals[1] || 0);
+      }
+
+      // backlinks count from domain_ranks
+      backlinks = parseInt(ovRaw.trim().split('\n')[1]?.split(';')[4] || 0);
 
     } catch (e) {
-      console.error('[SEMRUSH ERROR]', e.message);
+      console.error('[ERROR]', e.message);
     }
-  } else {
-    console.log(`[SKIP] domain="${domain}" KEY="${KEY ? 'set' : 'MISSING'}"`);
   }
 
   console.log(`[RESULTS] AS=${authorityScore} Traffic=${organicTraffic} KW=${organicKeywords} BL=${backlinks}`);
