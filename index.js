@@ -21,6 +21,14 @@ function emo(pct) {
   return '\u274c';
 }
 
+function rankToAuthority(rank) {
+  if (rank <= 0) return 0;
+  if (rank < 100000)  return Math.max(1, Math.round(70 - (rank / 100000) * 30));
+  if (rank < 500000)  return Math.max(1, Math.round(40 - ((rank - 100000) / 400000) * 20));
+  if (rank < 2000000) return Math.max(1, Math.round(20 - ((rank - 500000) / 1500000) * 10));
+  return 5;
+}
+
 module.exports = async (req, res) => {
   const urlSlug = req.url.split('?')[0].replace(/^\//, '') || req.query.slug || '';
   const company = req.query.company || urlSlug.replace(/-/g, ' ') || 'Your Company';
@@ -37,8 +45,8 @@ module.exports = async (req, res) => {
 
   const tasks = [];
 
-  // SEMrush domain_ranks
   if (domain && KEY) {
+    // domain_ranks: Domain;Rank;Organic Keywords;Organic Traffic;Organic Cost;Adwords Keywords
     tasks.push(
       httpGet(`https://api.semrush.com/?type=domain_ranks&key=${KEY}&export_columns=Dn,Rk,Or,Ot,Oc,Ad&domain=${domain}&database=us`)
         .then(raw => {
@@ -46,28 +54,18 @@ module.exports = async (req, res) => {
           const lines = raw.trim().split('\n');
           if (lines.length >= 2) {
             const vals = lines[1].split(';');
+            const rank      = parseInt(vals[1] || 0);
             organicKeywords = parseInt(vals[2] || 0);
             organicTraffic  = parseInt(vals[3] || 0);
-          }
-        })
-    );
-
-    // SEMrush backlinks_overview — correct endpoint for authority score
-    tasks.push(
-      httpGet(`https://api.semrush.com/?type=backlinks_overview&key=${KEY}&target=${domain}&target_type=root_domain&export_columns=ascore,total`)
-        .then(raw => {
-          console.log(`[backlinks_overview] ${raw.substring(0, 300)}`);
-          const lines = raw.trim().split('\n');
-          if (lines.length >= 2) {
-            const vals = lines[1].split(';');
-            authorityScore = parseInt(vals[0] || 0);
-            backlinks      = parseInt(vals[1] || 0);
+            backlinks       = parseInt(vals[4] || 0);
+            authorityScore  = rankToAuthority(rank);
+            console.log(`[parsed] rank=${rank} AS=${authorityScore} KW=${organicKeywords} Traffic=${organicTraffic} BL=${backlinks}`);
           }
         })
     );
   }
 
-  // PageSpeed API (free, no key needed for basic)
+  // PageSpeed API — real website speed score
   if (domain) {
     tasks.push(
       httpGet(`https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=https://${domain}&strategy=mobile&category=performance`)
@@ -90,10 +88,8 @@ module.exports = async (req, res) => {
 
   console.log(`[RESULTS] AS=${authorityScore} Traffic=${organicTraffic} KW=${organicKeywords} BL=${backlinks} PS=${pageSpeedScore}`);
 
-  // Score calculations
-  const daScore       = Math.min(authorityScore, 100);
   const speedScore    = pageSpeedScore > 0 ? pageSpeedScore : (organicTraffic > 1000 ? 65 : organicTraffic > 300 ? 45 : organicTraffic > 50 ? 30 : 20);
-  const seoScore      = daScore;
+  const seoScore      = authorityScore;
   const localScore    = organicKeywords > 500 ? 70 : organicKeywords > 100 ? 50 : organicKeywords > 20 ? 30 : 15;
   const citationScore = backlinks > 500 ? 75 : backlinks > 200 ? 55 : backlinks > 50 ? 35 : backlinks > 10 ? 20 : 10;
   const gbpScore      = organicKeywords > 200 ? 55 : organicKeywords > 50 ? 38 : organicKeywords > 10 ? 25 : 18;
@@ -212,4 +208,3 @@ body { font-family: Arial, Helvetica, sans-serif; background: #f2f4f7; color: #1
   res.setHeader('Content-Type', 'text/html');
   res.status(200).send(html);
 };
- 
