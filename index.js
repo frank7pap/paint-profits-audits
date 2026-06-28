@@ -15,13 +15,6 @@ function scoreBar(pct) {
   return '\u2588'.repeat(n) + '\u2591'.repeat(10 - n);
 }
 
-// Returns { emoji, label, color } for a 0-100 score
-function scoreStatus(val) {
-  if (val >= 70) return { emoji: '\uD83D\uDD28', label: 'ROOM FOR IMPROVEMENT', color: '#E87722' };
-  if (val >= 40) return { emoji: '\u26A0\uFE0F', label: 'NEEDS ATTENTION', color: '#E87722' };
-  return { emoji: '\u274C', label: 'POOR', color: '#e74c3c' };
-}
-
 function dataEmo(val, good, warn) {
   if (val >= good) return '\u2705';
   if (val >= warn) return '\u26A0\uFE0F';
@@ -46,11 +39,54 @@ function rankToAuthority(rank) {
   return 5;
 }
 
-// Renders one score row
+// Per-metric status: returns { emoji, label, color }
+function metricStatus(val, metric) {
+  const hammer = '\uD83D\uDD28';
+  const warn   = '\u26A0\uFE0F';
+  const cross  = '\u274C';
+  const orange = '#E87722';
+  const red    = '#e74c3c';
+
+  if (val >= 70) return { emoji: hammer, label: 'ROOM FOR IMPROVEMENT', color: orange };
+
+  if (metric === 'gbp') {
+    return val >= 40
+      ? { emoji: warn, label: 'NEEDS OPTIMIZATION', color: orange }
+      : { emoji: cross, label: 'POOR', color: red };
+  }
+  if (metric === 'ai') {
+    return val >= 40
+      ? { emoji: warn, label: 'LOW VISIBILITY', color: orange }
+      : { emoji: cross, label: 'INVISIBLE', color: red };
+  }
+  if (metric === 'maps') {
+    return val >= 40
+      ? { emoji: warn, label: 'RANKING GAPS', color: orange }
+      : { emoji: cross, label: 'POOR', color: red };
+  }
+  if (metric === 'authority') {
+    return val >= 40
+      ? { emoji: warn, label: 'AUTHORITY GAPS', color: orange }
+      : { emoji: cross, label: 'LOW', color: red };
+  }
+  if (metric === 'speed') {
+    return val >= 40
+      ? { emoji: warn, label: 'SLOWING YOU DOWN', color: orange }
+      : { emoji: cross, label: 'TEST NOT PASSED', color: red };
+  }
+  if (metric === 'citations') {
+    return val >= 40
+      ? { emoji: warn, label: 'MISSING LISTINGS', color: orange }
+      : { emoji: cross, label: 'POOR', color: red };
+  }
+  return { emoji: cross, label: 'POOR', color: red };
+}
+
+// icon: string (emoji or HTML span)
 // display: 'pct' => "38%"   'outof' => "13/100"
-function scoreRow(icon, name, val, display) {
+function scoreRow(icon, name, val, display, metric) {
   const formatted = display === 'pct' ? `${val}%` : `${val}/100`;
-  const s = scoreStatus(val);
+  const s = metricStatus(val, metric);
   return `
     <div class="score-card">
       <div class="score-icon">${icon}</div>
@@ -58,9 +94,7 @@ function scoreRow(icon, name, val, display) {
         <div class="score-name">${name}</div>
         <div class="score-bar-wrap">
           <div class="score-bar-col">
-            <div class="score-bar-wrap-inner">
-              <div class="score-bar">${scoreBar(val)}</div>
-            </div>
+            <div class="score-bar">${scoreBar(val)}</div>
             <div class="score-status" style="color:${s.color}">${s.label}</div>
           </div>
           <div class="score-right">
@@ -132,28 +166,24 @@ module.exports = async (req, res) => {
 
   await Promise.all(tasks);
 
-  // --- Score calculations ---
-  // 1. GBP Health → percentage
-  const gbpScore = organicKeywords > 200 ? 55 : organicKeywords > 50 ? 38 : organicKeywords > 10 ? 25 : 18;
-  // 2. Authority → x/100
-  const authScore = authorityScore;
-  // 3. AI Visibility → percentage (always low, creates urgency)
-  const aiScore = Math.min(35, Math.max(5, Math.round(authScore * 0.4 + (organicTraffic > 500 ? 8 : organicTraffic > 100 ? 4 : 1))));
-  // 4. Website Speed → x/100
-  const speedScore = pageSpeedScore > 0 ? pageSpeedScore : (organicTraffic > 1000 ? 65 : organicTraffic > 300 ? 45 : organicTraffic > 50 ? 30 : 20);
-  // 5. Local Ranking → percentage
-  const localScore = organicKeywords > 500 ? 70 : organicKeywords > 100 ? 50 : organicKeywords > 20 ? 30 : 15;
-  // 6. Citations → x/100
+  // Score calculations
+  const gbpScore      = organicKeywords > 200 ? 55 : organicKeywords > 50 ? 38 : organicKeywords > 10 ? 25 : 18;
+  const aiScore       = Math.min(35, Math.max(5, Math.round(authorityScore * 0.4 + (organicTraffic > 500 ? 8 : organicTraffic > 100 ? 4 : 1))));
+  const mapsScore     = organicKeywords > 500 ? 70 : organicKeywords > 100 ? 50 : organicKeywords > 20 ? 30 : 15;
+  const authScore     = authorityScore;
+  const speedScore    = pageSpeedScore > 0 ? pageSpeedScore : (organicTraffic > 1000 ? 65 : organicTraffic > 300 ? 45 : organicTraffic > 50 ? 30 : 20);
   const citationScore = backlinks > 500 ? 75 : backlinks > 200 ? 55 : backlinks > 50 ? 35 : backlinks > 10 ? 20 : 10;
 
   const date = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+
+  const gIcon = `<span style="font-family:Arial,sans-serif;font-size:26px;font-weight:900;color:#4285F4;line-height:1;">G</span>`;
 
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>${company} - Free Google Visibility Audit | Paint & Profits</title>
+<title>${company} - Google Visibility Audit | Paint & Profits</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: Arial, Helvetica, sans-serif; background: #f2f4f7; color: #1A1A2E; }
@@ -170,12 +200,11 @@ body { font-family: Arial, Helvetica, sans-serif; background: #f2f4f7; color: #1
 
 .score-card { display: flex; align-items: flex-start; padding: 16px 0; border-bottom: 1px solid #f0f2f5; gap: 16px; }
 .score-card:last-child { border-bottom: none; }
-.score-icon { font-size: 28px; width: 40px; text-align: center; flex-shrink: 0; padding-top: 2px; }
+.score-icon { font-size: 28px; width: 40px; text-align: center; flex-shrink: 0; padding-top: 2px; display: flex; align-items: center; justify-content: center; }
 .score-info { flex: 1; }
 .score-name { font-size: 15px; font-weight: 700; color: #1A1A2E; margin-bottom: 8px; }
 .score-bar-wrap { display: flex; align-items: flex-start; gap: 10px; }
 .score-bar-col { flex: 1; }
-.score-bar-wrap-inner { display: flex; align-items: center; }
 .score-bar { font-family: monospace; font-size: 14px; color: #5BC4F5; }
 .score-status { font-size: 11px; font-weight: 700; margin-top: 6px; }
 .score-right { display: flex; flex-direction: column; align-items: flex-end; flex-shrink: 0; width: 120px; }
@@ -183,8 +212,9 @@ body { font-family: Arial, Helvetica, sans-serif; background: #f2f4f7; color: #1
 
 .data-section { background: #1A1A2E; border-radius: 12px; padding: 24px 28px; margin-bottom: 16px; }
 .data-title { font-size: 10px; font-weight: 700; color: #5BC4F5; letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 18px; }
-.data-grid { display: flex; gap: 12px; flex-wrap: wrap; }
-.data-card { flex: 1; min-width: 140px; background: rgba(255,255,255,0.06); border-radius: 10px; padding: 16px; border: 1px solid rgba(255,255,255,0.1); text-align: center; }
+.data-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.data-card { background: rgba(255,255,255,0.06); border-radius: 10px; padding: 16px; border: 1px solid rgba(255,255,255,0.1); text-align: center; }
+.data-card-traffic { background: rgba(255,255,255,0.06); border-radius: 10px; padding: 16px; border: 1px solid rgba(255,255,255,0.1); text-align: center; }
 .data-val { font-size: 28px; font-weight: 900; color: #fff; }
 .data-label { font-size: 10px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
 .data-emoji { font-size: 16px; margin-top: 6px; }
@@ -217,8 +247,8 @@ body { font-family: Arial, Helvetica, sans-serif; background: #f2f4f7; color: #1
   .cards { flex-direction: column; }
   .score-bar { display: none; }
   .scores, .header, .cta-box { padding: 20px; }
-  .data-grid { gap: 8px; }
-  .data-card { min-width: 100px; }
+  .data-grid { grid-template-columns: repeat(2, 1fr); }
+  .data-card-traffic { grid-column: 1 / -1; }
 }
 </style>
 </head>
@@ -229,23 +259,23 @@ body { font-family: Arial, Helvetica, sans-serif; background: #f2f4f7; color: #1
     <div class="brand">&#127912; Paint &amp; Profits</div>
     <div class="tagline">Marketing for Painters</div>
     <div class="co-name">${company}</div>
-    <div class="co-sub">Free Google Visibility Audit &mdash; ${city}${state ? ', ' + state : ''} &mdash; ${date}</div>
+    <div class="co-sub">Google Visibility Audit &mdash; ${city}${state ? ', ' + state : ''} &mdash; ${date}</div>
   </div>
 
   <div class="scores">
     <div class="scores-title">Your Google Visibility Scores</div>
-    ${scoreRow('&#128205;', 'Google Business Profile Health', gbpScore, 'pct')}
-    ${scoreRow('&#127942;', 'Authority Score', authScore, 'outof')}
-    ${scoreRow('&#129302;', 'AI Visibility', aiScore, 'pct')}
-    ${scoreRow('&#9889;', 'Website Speed', speedScore, 'outof')}
-    ${scoreRow('&#127959;', 'Local Ranking Score', localScore, 'pct')}
-    ${scoreRow('&#128279;', 'Citations &amp; Local Listings', citationScore, 'outof')}
+    ${scoreRow(gIcon, 'Google Business Profile Health', gbpScore, 'pct', 'gbp')}
+    ${scoreRow('&#129302;', 'AI Visibility', aiScore, 'pct', 'ai')}
+    ${scoreRow('&#128205;', 'Maps Ranking Score', mapsScore, 'pct', 'maps')}
+    ${scoreRow('&#127942;', 'Authority Score', authScore, 'outof', 'authority')}
+    ${scoreRow('&#9889;', 'Website Speed', speedScore, 'outof', 'speed')}
+    ${scoreRow('&#128279;', 'Citations &amp; Local Listings', citationScore, 'outof', 'citations')}
   </div>
 
   <div class="data-section">
     <div class="data-title">More Data</div>
     <div class="data-grid">
-      <div class="data-card">
+      <div class="data-card-traffic">
         <div class="data-val">${organicTraffic.toLocaleString()}</div>
         <div class="data-label">Monthly Traffic</div>
         <div class="data-emoji">${dataEmo(organicTraffic, 1000, 300)}</div>
@@ -321,7 +351,7 @@ body { font-family: Arial, Helvetica, sans-serif; background: #f2f4f7; color: #1
   <div class="cta-box">
     <div class="spot">&#9889; 1 spot open in ${city}</div>
     <h2>Ready to fix this?</h2>
-    <p>Book a free 15-min call. We&rsquo;ll show you exactly what we&rsquo;d do for ${city} and what results to expect.</p>
+    <p>Book a free 15-min call. We&rsquo;ll show you exactly what we&rsquo;d do for ${company} and what results to expect.</p>
     <a class="btn" href="https://calendly.com/dillon-y1rb/discovery-call-fb-clone">BOOK YOUR FREE CALL &rarr;</a>
   </div>
 
