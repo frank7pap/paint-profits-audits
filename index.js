@@ -229,8 +229,8 @@ body { font-family: Arial, Helvetica, sans-serif; background: #f2f4f7; color: #1
 .results h2 { font-size: 10px; font-weight: 700; color: #1A1A2E; letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 16px; text-align: center; }
 .cards { display: flex; gap: 8px; }
 .card { flex: 1; border: 1px solid #e2e6ea; border-radius: 10px; overflow: hidden; }
-.card-top { background: #fff; padding: 14px 8px; text-align: center; min-height: 72px; display: flex; align-items: center; justify-content: center; }
-.card-top img { max-height: 44px; max-width: 100%; object-fit: contain; }
+.card-top { background: #fff; padding: 14px 8px; text-align: center; min-height: 90px; display: flex; align-items: center; justify-content: center; }
+.card-top img { max-height: 64px; max-width: 100%; object-fit: contain; }
 .card-bot { background: #1A1A2E; padding: 12px 8px 14px; text-align: center; }
 .lbl { font-size: 8px; font-weight: 700; color: #5BC4F5; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 6px; }
 .old { font-size: 10px; color: rgba(255,255,255,0.4); text-decoration: line-through; }
@@ -256,7 +256,7 @@ body { font-family: Arial, Helvetica, sans-serif; background: #f2f4f7; color: #1
 <div class="wrap">
 
   <div class="header">
-    <img src="https://res.cloudinary.com/do1pkkrqn/image/upload/v1781730318/PRIMARY_LOGO_kgj3am.png" alt="Paint & Profits" style="height:70px;width:auto;margin-bottom:8px;" />
+    <img src="https://res.cloudinary.com/do1pkkrqn/image/upload/v1781730318/PRIMARY_LOGO_kgj3am.png" alt="Paint & Profits" style="height:100px;width:auto;margin-bottom:8px;" />
     <div class="tagline">Marketing for Painters</div>
     <div class="co-name">${company}</div>
     <div class="co-sub">Google Visibility Audit &mdash; ${city}${state ? ', ' + state : ''} &mdash; ${date}</div>
@@ -336,7 +336,7 @@ body { font-family: Arial, Helvetica, sans-serif; background: #f2f4f7; color: #1
         <div class="card-top">
           <img src="https://res.cloudinary.com/do1pkkrqn/image/upload/v1781730393/SwiftHand_AiVector_bk8zck.png"
                onerror="this.outerHTML='<div style=\\'font-size:12px;font-weight:900;color:#F5C518;\\'>&#128038; SWIFTHAND<div style=\\'font-size:9px;font-weight:700;color:#7B2D8B;letter-spacing:1px;text-transform:uppercase;margin-top:2px;\\'>Painting</div></div>'"
-               alt="SwiftHand Painting" />
+               alt="SwiftHand Painting" style="max-height:64px;max-width:100%;object-fit:contain;" />
         </div>
         <div class="card-bot">
           <div class="lbl">Monthly Leads</div>
