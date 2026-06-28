@@ -189,7 +189,7 @@ module.exports = async (req, res) => {
 body { font-family: Arial, Helvetica, sans-serif; background: #f2f4f7; color: #1A1A2E; }
 .wrap { max-width: 700px; margin: 0 auto; padding: 32px 16px 60px; }
 
-.header { background: #fff; border-radius: 12px; padding: 32px 40px 28px; margin-bottom: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.07); text-align: center; }
+.header { background: #fff; border-radius: 12px; padding: 16px 40px 20px; margin-bottom: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.07); text-align: center; }
 .brand { font-family: Georgia, serif; font-size: 28px; font-weight: 900; color: #1A1A2E; }
 .tagline { font-size: 11px; font-weight: 700; color: #5BC4F5; letter-spacing: 3px; text-transform: uppercase; margin-top: 4px; }
 .co-name { font-size: 24px; font-weight: 700; margin-top: 20px; }
@@ -230,7 +230,7 @@ body { font-family: Arial, Helvetica, sans-serif; background: #f2f4f7; color: #1
 .cards { display: flex; gap: 8px; }
 .card { flex: 1; border: 1px solid #e2e6ea; border-radius: 10px; overflow: hidden; }
 .card-top { background: #fff; padding: 14px 8px; text-align: center; min-height: 90px; display: flex; align-items: center; justify-content: center; }
-.card-top img { max-height: 64px; max-width: 100%; object-fit: contain; }
+.card-top img { height: 64px; width: auto; max-width: 100%; object-fit: contain; }
 .card-bot { background: #1A1A2E; padding: 12px 8px 14px; text-align: center; }
 .lbl { font-size: 8px; font-weight: 700; color: #5BC4F5; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 6px; }
 .old { font-size: 10px; color: rgba(255,255,255,0.4); text-decoration: line-through; }
@@ -256,7 +256,7 @@ body { font-family: Arial, Helvetica, sans-serif; background: #f2f4f7; color: #1
 <div class="wrap">
 
   <div class="header">
-    <img src="https://res.cloudinary.com/do1pkkrqn/image/upload/v1781730318/PRIMARY_LOGO_kgj3am.png" alt="Paint & Profits" style="height:140px;width:auto;margin-bottom:4px;" />
+    <img src="https://res.cloudinary.com/do1pkkrqn/image/upload/v1781730318/PRIMARY_LOGO_kgj3am.png" alt="Paint & Profits" style="height:140px;width:auto;display:block;margin:0 auto -10px;" />
     <div class="co-name">${company}</div>
     <div class="co-sub">Google Visibility Audit &mdash; ${city}${state ? ', ' + state : ''} &mdash; ${date}</div>
   </div>
