@@ -57,10 +57,17 @@ function scoreRow(icon, name, val, display) {
       <div class="score-info">
         <div class="score-name">${name}</div>
         <div class="score-bar-wrap">
-          <div class="score-bar">${scoreBar(val)}</div>
-          <div class="score-pct">${formatted}</div>
+          <div class="score-bar-col">
+            <div class="score-bar-wrap-inner">
+              <div class="score-bar">${scoreBar(val)}</div>
+            </div>
+            <div class="score-status" style="color:${s.color}">${s.label}</div>
+          </div>
+          <div class="score-right">
+            <div class="score-pct">${formatted}</div>
+            <div class="score-emoji">${s.emoji}</div>
+          </div>
         </div>
-        <div class="score-status" style="color:${s.color}">${s.emoji} ${s.label}</div>
       </div>
     </div>`;
 }
@@ -167,10 +174,14 @@ body { font-family: Arial, Helvetica, sans-serif; background: #f2f4f7; color: #1
 .score-icon { font-size: 28px; width: 40px; text-align: center; flex-shrink: 0; padding-top: 2px; }
 .score-info { flex: 1; }
 .score-name { font-size: 15px; font-weight: 700; color: #1A1A2E; margin-bottom: 8px; }
-.score-bar-wrap { display: flex; align-items: center; gap: 10px; }
-.score-bar { font-family: monospace; font-size: 14px; color: #5BC4F5; flex: 1; }
-.score-pct { font-size: 22px; font-weight: 900; color: #1A1A2E; width: 80px; text-align: right; flex-shrink: 0; }
+.score-bar-wrap { display: flex; align-items: flex-start; gap: 10px; }
+.score-bar-col { flex: 1; }
+.score-bar-wrap-inner { display: flex; align-items: center; }
+.score-bar { font-family: monospace; font-size: 14px; color: #5BC4F5; }
 .score-status { font-size: 11px; font-weight: 700; margin-top: 6px; }
+.score-right { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; width: 80px; }
+.score-pct { font-size: 22px; font-weight: 900; color: #1A1A2E; text-align: center; line-height: 1; }
+.score-emoji { font-size: 18px; margin-top: 4px; text-align: center; line-height: 1; }
 
 .data-section { background: #1A1A2E; border-radius: 12px; padding: 24px 28px; margin-bottom: 16px; }
 .data-title { font-size: 10px; font-weight: 700; color: #5BC4F5; letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 18px; }
