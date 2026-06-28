@@ -256,7 +256,7 @@ body { font-family: Arial, Helvetica, sans-serif; background: #f2f4f7; color: #1
 <div class="wrap">
 
   <div class="header">
-    <div class="brand">&#127912; Paint &amp; Profits</div>
+    <img src="https://res.cloudinary.com/do1pkkrqn/image/upload/v1781730318/PRIMARY_LOGO_kgj3am.png" alt="Paint & Profits" style="height:70px;width:auto;margin-bottom:8px;" />
     <div class="tagline">Marketing for Painters</div>
     <div class="co-name">${company}</div>
     <div class="co-sub">Google Visibility Audit &mdash; ${city}${state ? ', ' + state : ''} &mdash; ${date}</div>
@@ -308,7 +308,7 @@ body { font-family: Arial, Helvetica, sans-serif; background: #f2f4f7; color: #1
     <div class="cards">
       <div class="card">
         <div class="card-top">
-          <img src="https://elitepaintcompany.com/wp-content/uploads/2021/09/elite-paint-company-logo.png"
+          <img src="https://res.cloudinary.com/do1pkkrqn/image/upload/v1781730403/elite-paint-company_1_kcxusf.webp"
                onerror="this.outerHTML='<div style=\\'font-size:13px;font-weight:900;color:#7B2D8B;\\'>&#128396; ELITE PAINT<div style=\\'font-size:9px;font-weight:700;color:#F5C518;letter-spacing:1px;text-transform:uppercase;margin-top:2px;\\'>Home Renovations</div></div>'"
                alt="Elite Paint Company" />
         </div>
@@ -321,7 +321,7 @@ body { font-family: Arial, Helvetica, sans-serif; background: #f2f4f7; color: #1
       </div>
       <div class="card">
         <div class="card-top">
-          <img src="https://peachpainting.com/wp-content/uploads/2022/01/peach-painting-logo.png"
+          <img src="https://res.cloudinary.com/do1pkkrqn/image/upload/v1781730425/LOGO_FC_1-RGB-350ppi-RASTER-WEB-300x146_nkxlvk.png"
                onerror="this.outerHTML='<div style=\\'font-size:16px;font-weight:900;color:#E8630A;\\'>&#127825; PEACH<div style=\\'font-size:9px;font-weight:700;color:#2E7D32;letter-spacing:1px;text-transform:uppercase;margin-top:2px;\\'>Painting</div></div>'"
                alt="Peach Painting" />
         </div>
@@ -334,7 +334,7 @@ body { font-family: Arial, Helvetica, sans-serif; background: #f2f4f7; color: #1
       </div>
       <div class="card">
         <div class="card-top">
-          <img src="https://swifthandpainting.com/wp-content/uploads/swifthand-logo.png"
+          <img src="https://res.cloudinary.com/do1pkkrqn/image/upload/v1781730393/SwiftHand_AiVector_bk8zck.png"
                onerror="this.outerHTML='<div style=\\'font-size:12px;font-weight:900;color:#F5C518;\\'>&#128038; SWIFTHAND<div style=\\'font-size:9px;font-weight:700;color:#7B2D8B;letter-spacing:1px;text-transform:uppercase;margin-top:2px;\\'>Painting</div></div>'"
                alt="SwiftHand Painting" />
         </div>
