@@ -256,7 +256,7 @@ body { font-family: Arial, Helvetica, sans-serif; background: #f2f4f7; color: #1
 <div class="wrap">
 
   <div class="header">
-    <img src="https://res.cloudinary.com/do1pkkrqn/image/upload/v1781730318/PRIMARY_LOGO_kgj3am.png" alt="Paint & Profits" style="height:140px;width:auto;display:block;margin:0 auto -10px;" />
+    <img src="https://res.cloudinary.com/do1pkkrqn/image/upload/v1782673023/586a60c4-38e0-42a9-a5cc-63d60d50014b_f25bet.png" alt="Paint & Profits" style="height:140px;width:auto;display:block;margin:0 auto -10px;" />
     <div class="co-name">${company}</div>
     <div class="co-sub">Google Visibility Audit &mdash; ${city}${state ? ', ' + state : ''} &mdash; ${date}</div>
   </div>
@@ -333,7 +333,7 @@ body { font-family: Arial, Helvetica, sans-serif; background: #f2f4f7; color: #1
       </div>
       <div class="card">
         <div class="card-top">
-          <img src="https://res.cloudinary.com/do1pkkrqn/image/upload/v1781730393/SwiftHand_AiVector_bk8zck.png"
+          <img src="https://res.cloudinary.com/do1pkkrqn/image/upload/v1782673148/6bf3cd0b-d0d0-4e7f-a9eb-b48c717210ea_iavxf3.png"
                onerror="this.outerHTML='<div style=\\'font-size:12px;font-weight:900;color:#F5C518;\\'>&#128038; SWIFTHAND<div style=\\'font-size:9px;font-weight:700;color:#7B2D8B;letter-spacing:1px;text-transform:uppercase;margin-top:2px;\\'>Painting</div></div>'"
                alt="SwiftHand Painting" />
         </div>
