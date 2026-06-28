@@ -6,7 +6,7 @@ function semrushGet(url) {
       let d = '';
       res.on('data', c => d += c);
       res.on('end', () => resolve(d));
-    }).on('error', () => resolve(''));
+    }).on('error', (e) => { console.error('HTTP error:', e.message); resolve(''); });
   });
 }
 
@@ -14,7 +14,7 @@ function parseCSV(text) {
   const lines = text.trim().split('\n');
   if (lines.length < 2) return {};
   const headers = lines[0].split(';');
-  const values = lines[1].split(';');
+  const values  = lines[1].split(';');
   const out = {};
   headers.forEach((h, i) => out[h.trim()] = (values[i] || '').trim());
   return out;
@@ -25,53 +25,50 @@ function scoreBar(pct) {
   return '\u2588'.repeat(n) + '\u2591'.repeat(10 - n);
 }
 
-function emoji(pct) {
+function emo(pct) {
   if (pct >= 70) return '\u2705';
   if (pct >= 40) return '\u26a0\ufe0f';
   return '\u274c';
 }
 
 module.exports = async (req, res) => {
-  const slug = req.query.slug;
-  if (!slug) return res.status(400).send('Missing slug');
-
-  const company = req.query.company || slug.replace(/-/g, ' ');
-  const city    = req.query.city  || 'Your City';
-  const state   = req.query.state || '';
+  // Get slug from URL path or query
+  const urlSlug = req.url.split('?')[0].replace(/^\//, '') || req.query.slug || '';
+  const company = req.query.company || urlSlug.replace(/-/g, ' ') || 'Your Company';
+  const city    = req.query.city    || 'Your City';
+  const state   = req.query.state   || '';
   const website = req.query.website || '';
-  const domain  = website.replace(/https?:\/\/(www\.)?/, '').split('/')[0].toLowerCase();
+  const domain  = website.replace(/https?:\/\/(www\.)?/i, '').split('/')[0].toLowerCase().trim();
 
-  const KEY = process.env.SEMRUSH_API_KEY;
+  console.log(`[AUDIT] slug=${urlSlug} domain=${domain} company=${company} city=${city}`);
 
-  let authorityScore  = 0;
-  let organicTraffic  = 0;
-  let organicKeywords = 0;
-  let backlinks       = 0;
+  const KEY = process.env.SEMRUSH_API_KEY || '';
+  let authorityScore = 0, organicTraffic = 0, organicKeywords = 0, backlinks = 0;
 
   if (domain && KEY) {
     try {
-      // Domain overview - correct endpoint
       const ovUrl = `https://api.semrush.com/?type=domain_ranks&key=${KEY}&export_columns=Dn,Rk,Or,Ot,Oc,Ad&domain=${domain}&database=us`;
       const ovRaw = await semrushGet(ovUrl);
-      console.log('domain_ranks raw:', ovRaw.substring(0, 200));
+      console.log(`[SEMRUSH domain_ranks] ${ovRaw.substring(0, 300)}`);
       const ovd = parseCSV(ovRaw);
-      organicKeywords = parseInt(ovd['Or'] || ovd['or'] || 0);
-      organicTraffic  = parseInt(ovd['Ot'] || ovd['ot'] || 0);
+      organicKeywords = parseInt(ovd['Or'] || 0);
+      organicTraffic  = parseInt(ovd['Ot'] || 0);
 
-      // Backlinks - correct endpoint
       const blUrl = `https://api.semrush.com/?type=backlinks_overview&key=${KEY}&target=${domain}&target_type=root_domain&export_columns=ascore,total,domains_num`;
       const blRaw = await semrushGet(blUrl);
-      console.log('backlinks raw:', blRaw.substring(0, 200));
+      console.log(`[SEMRUSH backlinks] ${blRaw.substring(0, 300)}`);
       const bld = parseCSV(blRaw);
-      authorityScore = parseInt(bld['ascore'] || bld['Authority Score'] || 0);
-      backlinks      = parseInt(bld['total']   || bld['Total'] || 0);
+      authorityScore = parseInt(bld['ascore'] || 0);
+      backlinks      = parseInt(bld['total']   || 0);
 
     } catch (e) {
-      console.error('SEMrush error:', e.message);
+      console.error('[SEMRUSH ERROR]', e.message);
     }
+  } else {
+    console.log(`[SKIP] domain="${domain}" KEY="${KEY ? 'set' : 'MISSING'}"`);
   }
 
-  console.log(`Results for ${domain}: AS=${authorityScore} Traffic=${organicTraffic} KW=${organicKeywords} BL=${backlinks}`);
+  console.log(`[RESULTS] AS=${authorityScore} Traffic=${organicTraffic} KW=${organicKeywords} BL=${backlinks}`);
 
   const daScore       = Math.min(authorityScore, 100);
   const speedScore    = organicTraffic > 1000 ? 65 : organicTraffic > 300 ? 45 : organicTraffic > 50 ? 30 : 20;
@@ -79,7 +76,6 @@ module.exports = async (req, res) => {
   const localScore    = organicKeywords > 500 ? 70 : organicKeywords > 100 ? 50 : organicKeywords > 20 ? 30 : 15;
   const citationScore = backlinks > 500 ? 75 : backlinks > 200 ? 55 : backlinks > 50 ? 35 : backlinks > 10 ? 20 : 10;
   const gbpScore      = organicKeywords > 200 ? 55 : organicKeywords > 50 ? 38 : organicKeywords > 10 ? 25 : 18;
-  const aiScore       = 0;
 
   const date = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
@@ -136,24 +132,20 @@ body { font-family: Arial, Helvetica, sans-serif; background: #f2f4f7; color: #1
 </head>
 <body>
 <div class="wrap">
-
   <div class="header">
     <div class="brand">&#127912; Paint &amp; Profits</div>
     <div class="tagline">Marketing for Painters</div>
     <div class="co-name">${company}</div>
     <div class="co-sub">Free Google Visibility Audit &mdash; ${city}${state ? ', ' + state : ''} &mdash; ${date}</div>
   </div>
-
   <div class="scores">
     <h2>Your Google Visibility Scores</h2>
-    <div class="row"><div class="label">GBP Health</div><div class="bar">${scoreBar(gbpScore)}</div><div class="num">${gbpScore}%</div><div class="ic">${emoji(gbpScore)}</div></div>
-    <div class="row"><div class="label">Website Speed</div><div class="bar">${scoreBar(speedScore)}</div><div class="num">${speedScore}%</div><div class="ic">${emoji(speedScore)}</div></div>
-    <div class="row"><div class="label">SEO Authority</div><div class="bar">${scoreBar(seoScore)}</div><div class="num">${seoScore}</div><div class="ic">${emoji(seoScore)}</div></div>
-    <div class="row"><div class="label">Local Ranking</div><div class="bar">${scoreBar(localScore)}</div><div class="num">${localScore}%</div><div class="ic">${emoji(localScore)}</div></div>
-    <div class="row"><div class="label">Citation Score</div><div class="bar">${scoreBar(citationScore)}</div><div class="num">${citationScore}%</div><div class="ic">${emoji(citationScore)}</div></div>
-    <div class="row"><div class="label">AI Visibility</div><div class="bar">${scoreBar(aiScore)}</div><div class="num">${aiScore}</div><div class="ic">${emoji(aiScore)}</div></div>
+    <div class="row"><div class="label">GBP Health</div><div class="bar">${scoreBar(gbpScore)}</div><div class="num">${gbpScore}%</div><div class="ic">${emo(gbpScore)}</div></div>
+    <div class="row"><div class="label">Website Speed</div><div class="bar">${scoreBar(speedScore)}</div><div class="num">${speedScore}%</div><div class="ic">${emo(speedScore)}</div></div>
+    <div class="row"><div class="label">SEO Authority</div><div class="bar">${scoreBar(seoScore)}</div><div class="num">${seoScore}</div><div class="ic">${emo(seoScore)}</div></div>
+    <div class="row"><div class="label">Local Ranking</div><div class="bar">${scoreBar(localScore)}</div><div class="num">${localScore}%</div><div class="ic">${emo(localScore)}</div></div>
+    <div class="row"><div class="label">Citation Score</div><div class="bar">${scoreBar(citationScore)}</div><div class="num">${citationScore}%</div><div class="ic">${emo(citationScore)}</div></div>
   </div>
-
   <div class="meta">
     <h2>Raw Data From Your Domain</h2>
     <div class="meta-grid">
@@ -163,14 +155,12 @@ body { font-family: Arial, Helvetica, sans-serif; background: #f2f4f7; color: #1
       <div class="mi"><div class="mv">${backlinks.toLocaleString()}</div><div class="ml">Backlinks</div></div>
     </div>
   </div>
-
   <div class="expl">
     <h2>What This Means For You</h2>
     <p>Your Google Business Profile needs optimization &mdash; painters with fully optimized GBPs get 3-5x more calls from local searches in ${city}.</p>
     <p>Your SEO authority score of ${seoScore} means competitors with higher scores are showing up above you when homeowners search for painters in ${city}. Every position you&rsquo;re not ranking = jobs going to someone else.</p>
     <p>Your AI visibility is critically low. ChatGPT, Google AI Overview, and Siri are now recommending local businesses &mdash; painters who show up there are getting leads before anyone even searches Google.</p>
   </div>
-
   <div class="results">
     <h2>Real Results From Real Painters</h2>
     <div class="cards">
@@ -188,14 +178,12 @@ body { font-family: Arial, Helvetica, sans-serif; background: #f2f4f7; color: #1
       </div>
     </div>
   </div>
-
   <div class="cta-box">
     <div class="spot">&#9889; 1 spot open in ${city}</div>
     <h2>Ready to fix this?</h2>
     <p>Book a free 15-min call. We&rsquo;ll show you exactly what we&rsquo;d do for ${city} and what results to expect.</p>
     <a class="btn" href="https://calendly.com/dillon-y1rb/discovery-call-fb-clone">BOOK YOUR FREE CALL &rarr;</a>
   </div>
-
 </div>
 </body>
 </html>`;
