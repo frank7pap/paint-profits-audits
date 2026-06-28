@@ -246,7 +246,8 @@ body { font-family: Arial, Helvetica, sans-serif; background: #f2f4f7; color: #1
 @media (max-width: 600px) {
   .cards { flex-direction: column; }
   .score-bar { display: none; }
-  .scores, .header, .cta-box { padding: 20px; }
+  .scores, .header, .cta-box { padding: 16px; }
+  .header img { height: 110px; }
   .data-grid { grid-template-columns: repeat(2, 1fr); }
   .data-card-traffic { grid-column: 1 / -1; }
 }
@@ -256,7 +257,7 @@ body { font-family: Arial, Helvetica, sans-serif; background: #f2f4f7; color: #1
 <div class="wrap">
 
   <div class="header">
-    <img src="https://res.cloudinary.com/do1pkkrqn/image/upload/v1782673023/586a60c4-38e0-42a9-a5cc-63d60d50014b_f25bet.png" alt="Paint & Profits" style="height:140px;width:auto;display:block;margin:0 auto -10px;" />
+    <img src="https://res.cloudinary.com/do1pkkrqn/image/upload/v1782673023/586a60c4-38e0-42a9-a5cc-63d60d50014b_f25bet.png" alt="Paint & Profits" style="height:auto;width:100%;max-width:300px;display:block;margin:0 auto;" />
     <div class="co-name">${company}</div>
     <div class="co-sub">Google Visibility Audit &mdash; ${city}${state ? ', ' + state : ''} &mdash; ${date}</div>
   </div>
