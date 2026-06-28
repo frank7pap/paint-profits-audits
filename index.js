@@ -1,6 +1,6 @@
 const https = require('https');
 
-function semrushGet(url) {
+function httpGet(url) {
   return new Promise((resolve) => {
     https.get(url, (res) => {
       let d = '';
@@ -33,44 +33,66 @@ module.exports = async (req, res) => {
 
   const KEY = process.env.SEMRUSH_API_KEY || '';
   let authorityScore = 0, organicTraffic = 0, organicKeywords = 0, backlinks = 0;
+  let pageSpeedScore = 0;
 
+  const tasks = [];
+
+  // SEMrush domain_ranks
   if (domain && KEY) {
-    try {
-      // domain_ranks returns: Domain;Rank;Organic Keywords;Organic Traffic;Organic Cost;Adwords Keywords
-      const ovUrl = `https://api.semrush.com/?type=domain_ranks&key=${KEY}&export_columns=Dn,Rk,Or,Ot,Oc,Ad&domain=${domain}&database=us`;
-      const ovRaw = await semrushGet(ovUrl);
-      console.log(`[domain_ranks] ${ovRaw.substring(0, 300)}`);
-      
-      const ovLines = ovRaw.trim().split('\n');
-      if (ovLines.length >= 2) {
-        const vals = ovLines[1].split(';');
-        // Dn=0, Rk=1, Or=2, Ot=3, Oc=4, Ad=5
-        organicKeywords = parseInt(vals[2] || 0);
-        organicTraffic  = parseInt(vals[3] || 0);
-      }
+    tasks.push(
+      httpGet(`https://api.semrush.com/?type=domain_ranks&key=${KEY}&export_columns=Dn,Rk,Or,Ot,Oc,Ad&domain=${domain}&database=us`)
+        .then(raw => {
+          console.log(`[domain_ranks] ${raw.substring(0, 300)}`);
+          const lines = raw.trim().split('\n');
+          if (lines.length >= 2) {
+            const vals = lines[1].split(';');
+            organicKeywords = parseInt(vals[2] || 0);
+            organicTraffic  = parseInt(vals[3] || 0);
+          }
+        })
+    );
 
-      // authority score from domain_score endpoint
-      const asUrl = `https://api.semrush.com/?type=domain_score&key=${KEY}&domain=${domain}&export_columns=Dn,Ds`;
-      const asRaw = await semrushGet(asUrl);
-      console.log(`[domain_score] ${asRaw.substring(0, 200)}`);
-      const asLines = asRaw.trim().split('\n');
-      if (asLines.length >= 2) {
-        const asVals = asLines[1].split(';');
-        authorityScore = parseInt(asVals[1] || 0);
-      }
-
-      // backlinks count from domain_ranks
-      backlinks = parseInt(ovRaw.trim().split('\n')[1]?.split(';')[4] || 0);
-
-    } catch (e) {
-      console.error('[ERROR]', e.message);
-    }
+    // SEMrush backlinks_overview — correct endpoint for authority score
+    tasks.push(
+      httpGet(`https://api.semrush.com/?type=backlinks_overview&key=${KEY}&target=${domain}&target_type=root_domain&export_columns=ascore,total`)
+        .then(raw => {
+          console.log(`[backlinks_overview] ${raw.substring(0, 300)}`);
+          const lines = raw.trim().split('\n');
+          if (lines.length >= 2) {
+            const vals = lines[1].split(';');
+            authorityScore = parseInt(vals[0] || 0);
+            backlinks      = parseInt(vals[1] || 0);
+          }
+        })
+    );
   }
 
-  console.log(`[RESULTS] AS=${authorityScore} Traffic=${organicTraffic} KW=${organicKeywords} BL=${backlinks}`);
+  // PageSpeed API (free, no key needed for basic)
+  if (domain) {
+    tasks.push(
+      httpGet(`https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=https://${domain}&strategy=mobile&category=performance`)
+        .then(raw => {
+          try {
+            const json = JSON.parse(raw);
+            const score = json?.lighthouseResult?.categories?.performance?.score;
+            if (score !== undefined) {
+              pageSpeedScore = Math.round(score * 100);
+              console.log(`[pagespeed] score=${pageSpeedScore}`);
+            }
+          } catch(e) {
+            console.log('[pagespeed] parse error');
+          }
+        })
+    );
+  }
 
+  await Promise.all(tasks);
+
+  console.log(`[RESULTS] AS=${authorityScore} Traffic=${organicTraffic} KW=${organicKeywords} BL=${backlinks} PS=${pageSpeedScore}`);
+
+  // Score calculations
   const daScore       = Math.min(authorityScore, 100);
-  const speedScore    = organicTraffic > 1000 ? 65 : organicTraffic > 300 ? 45 : organicTraffic > 50 ? 30 : 20;
+  const speedScore    = pageSpeedScore > 0 ? pageSpeedScore : (organicTraffic > 1000 ? 65 : organicTraffic > 300 ? 45 : organicTraffic > 50 ? 30 : 20);
   const seoScore      = daScore;
   const localScore    = organicKeywords > 500 ? 70 : organicKeywords > 100 ? 50 : organicKeywords > 20 ? 30 : 15;
   const citationScore = backlinks > 500 ? 75 : backlinks > 200 ? 55 : backlinks > 50 ? 35 : backlinks > 10 ? 20 : 10;
