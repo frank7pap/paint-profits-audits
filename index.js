@@ -178,9 +178,8 @@ body { font-family: Arial, Helvetica, sans-serif; background: #f2f4f7; color: #1
 .score-bar-wrap-inner { display: flex; align-items: center; }
 .score-bar { font-family: monospace; font-size: 14px; color: #5BC4F5; }
 .score-status { font-size: 11px; font-weight: 700; margin-top: 6px; }
-.score-right { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; width: 80px; }
-.score-pct { font-size: 22px; font-weight: 900; color: #1A1A2E; text-align: center; line-height: 1; }
-.score-emoji { font-size: 18px; margin-top: 4px; text-align: center; line-height: 1; }
+.score-right { display: flex; flex-direction: column; align-items: flex-end; flex-shrink: 0; width: 120px; }
+.score-pct { font-size: 22px; font-weight: 900; color: #1A1A2E; white-space: nowrap; line-height: 1; }
 
 .data-section { background: #1A1A2E; border-radius: 12px; padding: 24px 28px; margin-bottom: 16px; }
 .data-title { font-size: 10px; font-weight: 700; color: #5BC4F5; letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 18px; }
